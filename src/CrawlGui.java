@@ -17,7 +17,7 @@ public class CrawlGui extends Application {
     private Button[] buttons = new Button[10];
     private static final int DIRECTION_COUNT = 4;
     private static final String[] BUTTONS = {
-            "North", "East", "South", "West",
+            "North", "West", "East", "South",
             "Look", "Examine", "Drop", "Take", "Fight", "Save"
     };
     private static final Pair[] BUTTON_POSITIONS = {
@@ -29,10 +29,16 @@ public class CrawlGui extends Application {
 
     private TextArea output;
 
+    private Cartographer map;
+    private Room currentRoom;
+    private Player player;
+
     private void loadButtons() {
         Pair buttonLocation;
         for (int i = 0; i < DIRECTION_COUNT; i++) {
             buttons[i] = new Button(BUTTONS[i]);
+            buttons[i].setOnAction((event) ->
+                    move(((Button) event.getSource()).getText()));
             buttonLocation = BUTTON_POSITIONS[i];
             directionButtons.add(buttons[i], buttonLocation.x, buttonLocation.y);
         }
@@ -45,6 +51,22 @@ public class CrawlGui extends Application {
 
     private void display(String message) {
         output.setText(output.getText() + "\n" + message);
+    }
+
+    private void move(String direction) {
+        Room nextRoom = currentRoom.getExits().get(direction);
+        if (nextRoom == null) {
+            display("No door that way");
+            return;
+        }
+        if (!currentRoom.leave(player)) {
+            display("Something prevents you from leaving");
+            return;
+        }
+        nextRoom.enter(player);
+        currentRoom = nextRoom;
+        display("You enter");
+        map.update();
     }
 
     public static void main(String[] args) {
@@ -60,15 +82,16 @@ public class CrawlGui extends Application {
             System.exit(1);
         }
 
-        Object[] map = MapIO.loadMap(paramters.get(0));
+        Object[] data = MapIO.loadMap(paramters.get(0));
 
-        if (map == null) {
+        if (data == null) {
             System.err.println("Unable to load file");
             System.exit(2);
         }
 
-        Player player = (Player) map[0];
-        Room room = (Room) map[1];
+        player = (Player) data[0];
+        currentRoom = (Room) data[1];
+        currentRoom.enter(player);
 
         BorderPane window = new BorderPane();
 
@@ -82,9 +105,14 @@ public class CrawlGui extends Application {
 
         window.setRight(buttonPane);
 
-        output = new TextArea("You find yourself in " + room.getDescription());
+        output = new TextArea("You find yourself in "
+                + currentRoom.getDescription());
         output.setEditable(false);
         window.setBottom(output);
+
+        map = new Cartographer(currentRoom);
+        map.update();
+        window.setCenter(map);
 
         primaryStage.setScene(new Scene(window));
         primaryStage.show();
