@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+
+/**
+ * The map of a dungeon adventure game.
+ */
 public class Cartographer extends Canvas {
 
     private GraphicsContext graphics;
@@ -19,6 +23,12 @@ public class Cartographer extends Canvas {
     private int xOffset;
     private int yOffset;
 
+    /**
+     * Construct a new Cartographer representing all rooms expanding from the
+     * starting room.
+     *
+     * @param start The room to start drawing from
+     */
     public Cartographer(Room start) {
         super();
 
@@ -36,6 +46,12 @@ public class Cartographer extends Canvas {
         this.start = start;
     }
 
+    /**
+     * Draw the representation of a Room to a JavaFX graphics context.
+     *
+     * @param room The room to draw to the graphics context
+     * @param location The location relative to the canvas to draw the room
+     */
     private void drawRoom(Room room, Pair location) {
         int startX = (location.x * ROOM_SIZE) + xOffset;
         int startY = (location.y * ROOM_SIZE) + yOffset;
@@ -55,19 +71,25 @@ public class Cartographer extends Canvas {
                 graphics.strokeText("@", startX + 4, startY + 12);
             }
             if (thing instanceof Treasure) {
-                graphics.strokeText("$", startX + 4 + ROOM_SIZE/2, startY + 12);
+                graphics.strokeText("$", startX + 4 + ROOM_SIZE/2,
+                        startY + 12);
             }
             if (thing instanceof Critter) {
                 Critter critter = (Critter) thing;
                 if (critter.isAlive()) {
-                    graphics.strokeText("M", startX + 4, startY + 12 + ROOM_SIZE / 2);
+                    graphics.strokeText("M", startX + 4,
+                            startY + 12 + ROOM_SIZE / 2);
                 } else {
-                    graphics.strokeText("m", startX + 4 + ROOM_SIZE/2, startY + 12 + ROOM_SIZE / 2);
+                    graphics.strokeText("m", startX + 4 + ROOM_SIZE/2,
+                            startY + 12 + ROOM_SIZE / 2);
                 }
             }
         }
     }
 
+    /**
+     * Redraw the JavaFX display of the map.
+     */
     public void update() {
         graphics = getGraphicsContext2D();
         BoundsMapper map = new BoundsMapper(start);
