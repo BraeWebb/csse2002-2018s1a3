@@ -12,6 +12,12 @@ import javafx.stage.Stage;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JavaFX Application for a game where players travel through a map collecting
+ * treasure and fighting monsters.
+ *
+ * @author Brae Webb
+ */
 public class CrawlGui extends Application {
 
     private GridPane directionButtons;
@@ -28,20 +34,12 @@ public class CrawlGui extends Application {
             new Pair(0, 4), new Pair(1, 4), new Pair(0, 5),
             new Pair(0, 6)
     };
-    private final EventHandler[] BUTTON_CALLBACKS = {
-            (event -> look()),
-            (event -> examine()),
-            (event -> drop()),
-            (event -> take()),
-            (event -> fight()),
-            (event -> save()),
-    };
+    private EventHandler[] buttonCallbacks;
+    private CrawlActions actions;
 
     private TextArea output;
 
     private Cartographer map;
-    private Room startRoom;
-    private Room currentRoom;
     private Player player;
 
     private void loadButtons() {
@@ -55,7 +53,7 @@ public class CrawlGui extends Application {
         }
         for (int i = DIRECTION_COUNT; i < BUTTONS.length; i++) {
             buttons[i] = new Button(BUTTONS[i]);
-            buttons[i].setOnAction(BUTTON_CALLBACKS[i - DIRECTION_COUNT]);
+            buttons[i].setOnAction(buttonCallbacks[i - DIRECTION_COUNT]);
             buttonLocation = BUTTON_POSITIONS[i];
             actionButtons.add(buttons[i], buttonLocation.x, buttonLocation.y);
         }
@@ -65,132 +63,20 @@ public class CrawlGui extends Application {
         output.appendText("\n" + message);
     }
 
-    private String ask(String question) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(question);
-        dialog.setHeaderText(null);
-        dialog.setGraphic(null);
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()){
-            return result.get();
-        }
-        return null;
-    }
-
     private void move(String direction) {
-        Room nextRoom = currentRoom.getExits().get(direction);
+        Room nextRoom = actions.getRoom().getExits().get(direction);
         if (nextRoom == null) {
             display("No door that way");
             return;
         }
-        if (!currentRoom.leave(player)) {
+        if (!actions.getRoom().leave(player)) {
             display("Something prevents you from leaving");
             return;
         }
         nextRoom.enter(player);
-        currentRoom = nextRoom;
+        actions.setRoom(nextRoom);
         display("You enter");
         map.update();
-    }
-
-    private void look() {
-        display(currentRoom.getDescription() + " - you see:");
-        for (Thing thing : currentRoom.getContents()) {
-            display(" " + thing.getShortDescription());
-        }
-        display("You are carrying:");
-        int worth = 0;
-        for (Thing thing : player.getContents()) {
-            display(" " + thing.getShortDescription());
-            if (thing instanceof Lootable) {
-                worth += ((Lootable) thing).getValue();
-            }
-        }
-        display("worth " + worth + " in total");
-    }
-
-    private void examine() {
-        String item = ask("Examine what?");
-        Thing thing = find(item, player.getContents());
-        if (thing != null) {
-            display(thing.getDescription());
-            return;
-        }
-        thing = find(item, currentRoom.getContents());
-        if (thing != null) {
-            display(thing.getDescription());
-            return;
-        }
-        display("Nothing found with that name");
-    }
-
-    private void drop() {
-        String item = ask("Item to drop?");
-        Thing thing = player.drop(item);
-        if (thing != null) {
-            currentRoom.enter(thing);
-        }
-    }
-
-    private void take() {
-        String item = ask("Take what?");
-        Thing thing = find(item, currentRoom.getContents(), true, false);
-        if (thing instanceof Mob && ((Mob) thing).isAlive()) {
-            return;
-        }
-        if (!currentRoom.leave(thing)) {
-            return;
-        }
-        player.add(thing);
-    }
-
-    private void fight() {
-        String item = ask("Fight what?");
-        Thing thing = find(item, currentRoom.getContents(), false, true);
-        Critter critter = (Critter) thing;
-
-        if (critter == null) {
-            return;
-        }
-
-        if (critter.isAlive()) {
-            player.fight(critter);
-        }
-        if (critter.isAlive()) {
-            display("Game over");
-        } else {
-            display("You won");
-        }
-    }
-
-    private void save() {
-        String file = ask("Save filename?");
-        if (MapIO.saveMap(startRoom, file)) {
-            display("Saved");
-        } else {
-            display("Unable to save");
-        }
-    }
-
-    private Thing find(String description, List<Thing> contents) {
-        return find(description, contents, false, false);
-    }
-
-    private Thing find(String description, List<Thing> contents,
-                       boolean skip, boolean critter) {
-        for (Thing thing : contents) {
-            if (skip && thing instanceof Player) {
-                continue;
-            }
-            if (critter && !(thing instanceof Critter)) {
-                continue;
-            }
-            if (thing.getShortDescription().equals(description)) {
-                return thing;
-            }
-        }
-        return null;
     }
 
     public static void main(String[] args) {
@@ -214,9 +100,23 @@ public class CrawlGui extends Application {
         }
 
         player = (Player) data[0];
-        startRoom = (Room) data[1];
-        currentRoom = startRoom;
-        currentRoom.enter(player);
+        Room startRoom = (Room) data[1];
+        startRoom.enter(player);
+
+        output = new TextArea("You find yourself in "
+                + startRoom.getDescription());
+        output.setEditable(false);
+
+        actions = new CrawlActions(player, startRoom, output);
+
+        buttonCallbacks = new EventHandler[]{
+                (event -> actions.look()),
+                (event -> actions.examine()),
+                (event -> actions.drop()),
+                (event -> actions.take()),
+                (event -> actions.fight()),
+                (event -> actions.save()),
+        };
 
         BorderPane window = new BorderPane();
 
@@ -230,12 +130,10 @@ public class CrawlGui extends Application {
 
         window.setRight(buttonPane);
 
-        output = new TextArea("You find yourself in "
-                + currentRoom.getDescription());
-        output.setEditable(false);
+        window.setBottom(output);
         window.setBottom(output);
 
-        map = new Cartographer(currentRoom);
+        map = new Cartographer(startRoom);
         map.update();
         window.setCenter(map);
 
