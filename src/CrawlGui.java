@@ -120,7 +120,7 @@ public class CrawlGui extends Application {
         }
         nextRoom.enter(player);
         currentRoom = nextRoom;
-        display("You enter");
+        display("You enter " + currentRoom.getDescription());
         map.update();
     }
 
@@ -173,6 +173,7 @@ public class CrawlGui extends Application {
         if (thing != null) {
             currentRoom.enter(thing);
         }
+        map.update();
     }
 
     /**
@@ -189,6 +190,7 @@ public class CrawlGui extends Application {
             return;
         }
         player.add(thing);
+        map.update();
     }
 
     /**
@@ -214,6 +216,7 @@ public class CrawlGui extends Application {
         } else {
             display("You won");
         }
+        map.update();
     }
 
     /**
