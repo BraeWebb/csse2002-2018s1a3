@@ -12,6 +12,13 @@ import javafx.stage.Stage;
 import java.util.List;
 import java.util.Optional;
 
+
+/**
+ * JavaFX Application for a game where players travel through a map collecting
+ * treasure and fighting monsters.
+ *
+ * @author Brae Webb
+ */
 public class CrawlGui extends Application {
 
     private GridPane directionButtons;
@@ -44,6 +51,10 @@ public class CrawlGui extends Application {
     private Room currentRoom;
     private Player player;
 
+    /**
+     * Load all the buttons into the appropriate grid and add their
+     * action event handlers.
+     */
     private void loadButtons() {
         Pair buttonLocation;
         for (int i = 0; i < DIRECTION_COUNT; i++) {
@@ -61,10 +72,21 @@ public class CrawlGui extends Application {
         }
     }
 
+    /**
+     * Log a message to the text area output of the application.
+     *
+     * @param message The message to append to the output
+     */
     private void display(String message) {
         output.appendText("\n" + message);
     }
 
+    /**
+     * Display a popup dialog asking the user for input and return the input.
+     *
+     * @param question Title of the popup dialog.
+     * @return The string the user entered or null if there was no entry.
+     */
     private String ask(String question) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle(question);
@@ -78,6 +100,14 @@ public class CrawlGui extends Application {
         return null;
     }
 
+    /**
+     * Move the player from the current room to the room in the given direction.
+     *
+     * Fail and display errors if there is no room in that direction or
+     * the player is prevented from leaving the current room.
+     *
+     * @param direction The direction to walk. One of North, South, East or West
+     */
     private void move(String direction) {
         Room nextRoom = currentRoom.getExits().get(direction);
         if (nextRoom == null) {
@@ -94,22 +124,30 @@ public class CrawlGui extends Application {
         map.update();
     }
 
+    /**
+     * Display, using the display method, the surroundings of the player
+     * and the contents of the player's inventory.
+     */
     private void look() {
         display(currentRoom.getDescription() + " - you see:");
         for (Thing thing : currentRoom.getContents()) {
             display(" " + thing.getShortDescription());
         }
         display("You are carrying:");
-        int worth = 0;
+        double worth = 0;
         for (Thing thing : player.getContents()) {
             display(" " + thing.getShortDescription());
             if (thing instanceof Lootable) {
                 worth += ((Lootable) thing).getValue();
             }
         }
-        display("worth " + worth + " in total");
+        display(String.format("worth %.1f in total", worth));
     }
 
+    /**
+     * Ask the user to enter the short description of a thing to examine.
+     * Examine the first Thing it can find by displaying the long description.
+     */
     private void examine() {
         String item = ask("Examine what?");
         Thing thing = find(item, player.getContents());
@@ -125,6 +163,10 @@ public class CrawlGui extends Application {
         display("Nothing found with that name");
     }
 
+    /**
+     * Ask the user to enter the short description of a Thing from the players
+     * inventory to drop into the current room.
+     */
     private void drop() {
         String item = ask("Item to drop?");
         Thing thing = player.drop(item);
@@ -133,6 +175,10 @@ public class CrawlGui extends Application {
         }
     }
 
+    /**
+     * Ask the user to enter the short description of a Thing from the current
+     * room to place into the players inventory.
+     */
     private void take() {
         String item = ask("Take what?");
         Thing thing = find(item, currentRoom.getContents(), true, false);
@@ -145,6 +191,12 @@ public class CrawlGui extends Application {
         player.add(thing);
     }
 
+    /**
+     * Ask the user to enter the short description of a critter to fight and
+     * begin a fight with that critter if it is found.
+     *
+     * If a critter with a matching description cannot be found, fail silently.
+     */
     private void fight() {
         String item = ask("Fight what?");
         Thing thing = find(item, currentRoom.getContents(), false, true);
@@ -164,6 +216,9 @@ public class CrawlGui extends Application {
         }
     }
 
+    /**
+     * Ask the user to enter a filename to save to and save the current map.
+     */
     private void save() {
         String file = ask("Save filename?");
         if (MapIO.saveMap(startRoom, file)) {
@@ -173,10 +228,28 @@ public class CrawlGui extends Application {
         }
     }
 
+    /**
+     * Find and return a Thing in a list of Thing's based on their short
+     * description.
+     *
+     * @param description The Thing short description to search for
+     * @param contents The list of Thing's to search
+     * @return The thing that was found or null
+     */
     private Thing find(String description, List<Thing> contents) {
         return find(description, contents, false, false);
     }
 
+    /**
+     * Find and return a Thing in a list of Thing's based on their short
+     * description.
+     *
+     * @param description The Thing short description to search for
+     * @param contents The list of Thing's to search
+     * @param skip True iff instances of Player's should be ignored
+     * @param critter True iff only instances of Critter should be considered
+     * @return The thing that was found or null
+     */
     private Thing find(String description, List<Thing> contents,
                        boolean skip, boolean critter) {
         for (Thing thing : contents) {
