@@ -11,6 +11,7 @@ public class Cartographer extends Canvas {
     private Room start;
 
     private static final int ROOM_SIZE = 50;
+    private static final int ROOM_WIDTH = ROOM_SIZE / 2;
     private static final int STROKE_WIDTH = 5;
 
     private Map<String, int[]> exitPositions = new HashMap<>();
@@ -21,20 +22,21 @@ public class Cartographer extends Canvas {
     public Cartographer(Room start) {
         super();
 
-        exitPositions.put("North", new int[]{ROOM_SIZE/2, -STROKE_WIDTH,
-                ROOM_SIZE/2, STROKE_WIDTH});
-        exitPositions.put("East", new int[]{ROOM_SIZE-STROKE_WIDTH, ROOM_SIZE/2,
-                ROOM_SIZE+STROKE_WIDTH, ROOM_SIZE/2});
-        exitPositions.put("West", new int[]{-STROKE_WIDTH, ROOM_SIZE/2,
-                STROKE_WIDTH, ROOM_SIZE/2});
-        exitPositions.put("South", new int[]{ROOM_SIZE/2, ROOM_SIZE-STROKE_WIDTH,
-                ROOM_SIZE/2, ROOM_SIZE+STROKE_WIDTH});
+        exitPositions.put("North", new int[]{ROOM_WIDTH, -STROKE_WIDTH,
+                ROOM_WIDTH, STROKE_WIDTH});
+        exitPositions.put("East", new int[]{ROOM_SIZE - STROKE_WIDTH,
+                ROOM_WIDTH, ROOM_SIZE + STROKE_WIDTH, ROOM_WIDTH});
+        exitPositions.put("West", new int[]{-STROKE_WIDTH, ROOM_WIDTH,
+                STROKE_WIDTH, ROOM_WIDTH});
+        exitPositions.put("South", new int[]{ROOM_WIDTH,
+                ROOM_SIZE - STROKE_WIDTH, ROOM_WIDTH,
+                ROOM_SIZE + STROKE_WIDTH});
 
         graphics = getGraphicsContext2D();
         this.start = start;
     }
 
-    public void drawRoom(Room room, Pair location) {
+    private void drawRoom(Room room, Pair location) {
         int startX = (location.x * ROOM_SIZE) + xOffset;
         int startY = (location.y * ROOM_SIZE) + yOffset;
         graphics.strokeRect(startX, startY, ROOM_SIZE, ROOM_SIZE);
