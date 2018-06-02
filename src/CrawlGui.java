@@ -1,5 +1,4 @@
 import javafx.application.Application;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -7,7 +6,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -32,7 +30,7 @@ public class CrawlGui extends Application {
     };
     private final EventHandler[] BUTTON_CALLBACKS = {
             (event -> look()),
-            (event -> look()),
+            (event -> examine()),
             (event -> look()),
             (event -> look()),
             (event -> look()),
@@ -66,9 +64,9 @@ public class CrawlGui extends Application {
         output.setText(output.getText() + "\n" + message);
     }
 
-    private String ask(String title, String question) {
+    private String ask(String question) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(title);
+        dialog.setTitle(question);
         dialog.setHeaderText(null);
         dialog.setGraphic(null);
 
@@ -109,6 +107,30 @@ public class CrawlGui extends Application {
             }
         }
         display("worth " + worth + " in total");
+    }
+
+    private void examine() {
+        String item = ask("Examine what?");
+        Thing thing = find(item, player.getContents());
+        if (thing != null) {
+            display(thing.getDescription());
+            return;
+        }
+        thing = find(item, currentRoom.getContents());
+        if (thing != null) {
+            display(thing.getDescription());
+            return;
+        }
+        display("Nothing found with that name");
+    }
+
+    private Thing find(String description, List<Thing> contents) {
+        for (Thing thing : contents) {
+            if (thing.getShortDescription().equals(description)) {
+                return thing;
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) {
