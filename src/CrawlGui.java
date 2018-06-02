@@ -31,15 +31,16 @@ public class CrawlGui extends Application {
     private final EventHandler[] BUTTON_CALLBACKS = {
             (event -> look()),
             (event -> examine()),
-            (event -> look()),
-            (event -> look()),
-            (event -> look()),
-            (event -> look()),
+            (event -> drop()),
+            (event -> take()),
+            (event -> fight()),
+            (event -> save()),
     };
 
     private TextArea output;
 
     private Cartographer map;
+    private Room startRoom;
     private Room currentRoom;
     private Player player;
 
@@ -61,7 +62,7 @@ public class CrawlGui extends Application {
     }
 
     private void display(String message) {
-        output.setText(output.getText() + "\n" + message);
+        output.appendText("\n" + message);
     }
 
     private String ask(String question) {
@@ -124,8 +125,67 @@ public class CrawlGui extends Application {
         display("Nothing found with that name");
     }
 
+    private void drop() {
+        String item = ask("Item to drop?");
+        Thing thing = player.drop(item);
+        if (thing != null) {
+            currentRoom.enter(thing);
+        }
+    }
+
+    private void take() {
+        String item = ask("Take what?");
+        Thing thing = find(item, currentRoom.getContents(), true, false);
+        if (thing instanceof Mob && ((Mob) thing).isAlive()) {
+            return;
+        }
+        if (!currentRoom.leave(thing)) {
+            return;
+        }
+        player.add(thing);
+    }
+
+    private void fight() {
+        String item = ask("Fight what?");
+        Thing thing = find(item, currentRoom.getContents(), false, true);
+        Critter critter = (Critter) thing;
+
+        if (critter == null) {
+            return;
+        }
+
+        if (critter.isAlive()) {
+            player.fight(critter);
+        }
+        if (critter.isAlive()) {
+            display("Game over");
+        } else {
+            display("You won");
+        }
+    }
+
+    private void save() {
+        String file = ask("Save filename?");
+        if (MapIO.saveMap(startRoom, file)) {
+            display("Saved");
+        } else {
+            display("Unable to save");
+        }
+    }
+
     private Thing find(String description, List<Thing> contents) {
+        return find(description, contents, false, false);
+    }
+
+    private Thing find(String description, List<Thing> contents,
+                       boolean skip, boolean critter) {
         for (Thing thing : contents) {
+            if (skip && thing instanceof Player) {
+                continue;
+            }
+            if (critter && !(thing instanceof Critter)) {
+                continue;
+            }
             if (thing.getShortDescription().equals(description)) {
                 return thing;
             }
@@ -154,7 +214,8 @@ public class CrawlGui extends Application {
         }
 
         player = (Player) data[0];
-        currentRoom = (Room) data[1];
+        startRoom = (Room) data[1];
+        currentRoom = startRoom;
         currentRoom.enter(player);
 
         BorderPane window = new BorderPane();
