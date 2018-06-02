@@ -1,7 +1,8 @@
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Paint;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class Cartographer extends Canvas {
@@ -10,12 +11,25 @@ public class Cartographer extends Canvas {
     private Room start;
 
     private static final int ROOM_SIZE = 50;
+    private static final int STROKE_WIDTH = 5;
+
+    private Map<String, int[]> exitPositions = new HashMap<>();
 
     private int xOffset;
     private int yOffset;
 
     public Cartographer(Room start) {
-        super(100, 100);
+        super();
+
+        exitPositions.put("North", new int[]{ROOM_SIZE/2, -STROKE_WIDTH,
+                ROOM_SIZE/2, STROKE_WIDTH});
+        exitPositions.put("East", new int[]{ROOM_SIZE-STROKE_WIDTH, ROOM_SIZE/2,
+                ROOM_SIZE+STROKE_WIDTH, ROOM_SIZE/2});
+        exitPositions.put("West", new int[]{-STROKE_WIDTH, ROOM_SIZE/2,
+                STROKE_WIDTH, ROOM_SIZE/2});
+        exitPositions.put("South", new int[]{ROOM_SIZE/2, ROOM_SIZE-STROKE_WIDTH,
+                ROOM_SIZE/2, ROOM_SIZE+STROKE_WIDTH});
+
         graphics = getGraphicsContext2D();
         this.start = start;
     }
@@ -25,6 +39,15 @@ public class Cartographer extends Canvas {
         int startY = (location.y * ROOM_SIZE) + yOffset;
         graphics.strokeRect(startX, startY, ROOM_SIZE, ROOM_SIZE);
 
+        for (String direction : room.getExits().keySet()) {
+            int[] position = exitPositions.get(direction);
+            if (position == null) {
+                continue;
+            }
+            graphics.strokeLine(position[0] + startX, position[1] + startY,
+                    position[2] + startX, position[3] + startY);
+        }
+
         for (Thing thing : room.getContents()) {
             if (thing instanceof Player) {
                 graphics.strokeText("@", startX + 4, startY + 12);
@@ -33,7 +56,12 @@ public class Cartographer extends Canvas {
                 graphics.strokeText("$", startX + 4 + ROOM_SIZE/2, startY + 12);
             }
             if (thing instanceof Critter) {
-                graphics.strokeText("M", startX + 4, startY + 12 + ROOM_SIZE/2);
+                Critter critter = (Critter) thing;
+                if (critter.isAlive()) {
+                    graphics.strokeText("M", startX + 4, startY + 12 + ROOM_SIZE / 2);
+                } else {
+                    graphics.strokeText("m", startX + 4 + ROOM_SIZE/2, startY + 12 + ROOM_SIZE / 2);
+                }
             }
         }
     }
