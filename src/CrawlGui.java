@@ -1,7 +1,10 @@
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -9,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CrawlGui extends Application {
 
@@ -25,6 +29,14 @@ public class CrawlGui extends Application {
             new Pair(1, 2), new Pair(0, 3), new Pair(1, 3),
             new Pair(0, 4), new Pair(1, 4), new Pair(0, 5),
             new Pair(0, 6)
+    };
+    private final EventHandler[] BUTTON_CALLBACKS = {
+            (event -> look()),
+            (event -> look()),
+            (event -> look()),
+            (event -> look()),
+            (event -> look()),
+            (event -> look()),
     };
 
     private TextArea output;
@@ -44,6 +56,7 @@ public class CrawlGui extends Application {
         }
         for (int i = DIRECTION_COUNT; i < BUTTONS.length; i++) {
             buttons[i] = new Button(BUTTONS[i]);
+            buttons[i].setOnAction(BUTTON_CALLBACKS[i - DIRECTION_COUNT]);
             buttonLocation = BUTTON_POSITIONS[i];
             actionButtons.add(buttons[i], buttonLocation.x, buttonLocation.y);
         }
@@ -51,6 +64,19 @@ public class CrawlGui extends Application {
 
     private void display(String message) {
         output.setText(output.getText() + "\n" + message);
+    }
+
+    private String ask(String title, String question) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.setGraphic(null);
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()){
+            return result.get();
+        }
+        return null;
     }
 
     private void move(String direction) {
@@ -67,6 +93,22 @@ public class CrawlGui extends Application {
         currentRoom = nextRoom;
         display("You enter");
         map.update();
+    }
+
+    private void look() {
+        display(currentRoom.getDescription() + " - you see:");
+        for (Thing thing : currentRoom.getContents()) {
+            display(" " + thing.getShortDescription());
+        }
+        display("You are carrying:");
+        int worth = 0;
+        for (Thing thing : player.getContents()) {
+            display(" " + thing.getShortDescription());
+            if (thing instanceof Lootable) {
+                worth += ((Lootable) thing).getValue();
+            }
+        }
+        display("worth " + worth + " in total");
     }
 
     public static void main(String[] args) {
