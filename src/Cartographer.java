@@ -20,6 +20,8 @@ public class Cartographer extends Canvas {
 
     private Map<String, int[]> exitPositions = new HashMap<>();
 
+    private BoundsMapper map;
+
     private int xOffset;
     private int yOffset;
 
@@ -32,7 +34,7 @@ public class Cartographer extends Canvas {
     public Cartographer(Room start) {
         super();
 
-        exitPositions.put("North", new int[]{ROOM_WIDTH, -STROKE_WIDTH,
+        exitPositions.put("North", new int[]{ROOM_WIDTH, - STROKE_WIDTH,
                 ROOM_WIDTH, STROKE_WIDTH});
         exitPositions.put("East", new int[]{ROOM_SIZE - STROKE_WIDTH,
                 ROOM_WIDTH, ROOM_SIZE + STROKE_WIDTH, ROOM_WIDTH});
@@ -44,6 +46,18 @@ public class Cartographer extends Canvas {
 
         graphics = getGraphicsContext2D();
         this.start = start;
+
+        map = new BoundsMapper(start);
+        map.walk();
+
+        int width = (map.xMax - map.xMin + 1) * ROOM_SIZE;
+        int height = (map.yMax - map.yMin + 1) * ROOM_SIZE;
+
+        setWidth(width);
+        setHeight(height);
+
+        xOffset = Math.abs(map.xMin) * ROOM_SIZE;
+        yOffset = Math.abs(map.yMin) * ROOM_SIZE;
     }
 
     /**
@@ -71,17 +85,17 @@ public class Cartographer extends Canvas {
                 graphics.strokeText("@", startX + 4, startY + 12);
             }
             if (thing instanceof Treasure) {
-                graphics.strokeText("$", startX + 4 + ROOM_SIZE/2,
+                graphics.strokeText("$", startX + 4 + ROOM_WIDTH,
                         startY + 12);
             }
             if (thing instanceof Critter) {
                 Critter critter = (Critter) thing;
                 if (critter.isAlive()) {
                     graphics.strokeText("M", startX + 4,
-                            startY + 12 + ROOM_SIZE / 2);
+                            startY + 12 + ROOM_WIDTH);
                 } else {
-                    graphics.strokeText("m", startX + 4 + ROOM_SIZE/2,
-                            startY + 12 + ROOM_SIZE / 2);
+                    graphics.strokeText("m", startX + 4 + ROOM_WIDTH,
+                            startY + 12 + ROOM_WIDTH);
                 }
             }
         }
@@ -91,20 +105,7 @@ public class Cartographer extends Canvas {
      * Redraw the JavaFX display of the map.
      */
     public void update() {
-        graphics = getGraphicsContext2D();
-        BoundsMapper map = new BoundsMapper(start);
-        map.walk();
-
-        int width = (map.xMax - map.xMin + 1) * ROOM_SIZE;
-        int height = (map.yMax - map.yMin + 1) * ROOM_SIZE;
-
-        setWidth(width);
-        setHeight(height);
-
         graphics.clearRect(0, 0, getWidth(), getHeight());
-
-        xOffset = Math.abs(map.xMin) * ROOM_SIZE;
-        yOffset = Math.abs(map.yMin) * ROOM_SIZE;
 
         for (Entry<Room, Pair> entry : map.coords.entrySet()) {
             drawRoom(entry.getKey(), entry.getValue());

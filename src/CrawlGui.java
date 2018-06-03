@@ -275,14 +275,14 @@ public class CrawlGui extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        List<String> paramters = getParameters().getRaw();
+        List<String> parameters = getParameters().getRaw();
 
-        if (paramters.size() != 1) {
+        if (parameters.size() != 1) {
             System.err.println("Usage: java CrawlGui mapname");
             System.exit(1);
         }
 
-        Object[] data = MapIO.loadMap(paramters.get(0));
+        Object[] data = MapIO.loadMap(parameters.get(0));
 
         if (data == null) {
             System.err.println("Unable to load file");
@@ -316,6 +316,7 @@ public class CrawlGui extends Application {
         window.setCenter(map);
 
         primaryStage.setScene(new Scene(window));
+        primaryStage.setTitle("Crawl - Explore");
         primaryStage.show();
     }
 }
